@@ -1,218 +1,218 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
-import Image from "next/image";
+import { FiMapPin, FiClock, FiAward, FiDollarSign } from "react-icons/fi";
+import Calendar from "@/components/Calendar";
 
 interface Instructor {
-  id: string;
+  _id: string;
   firstName: string;
   lastName: string;
-  email: string;
-  bio: string;
-  profilePicture: string;
-  bjjCredentials: {
-    beltRank: string;
-    yearsOfExperience: number;
-    teachingExperience: number;
-    certifications: string[];
+  profilePicture?: string;
+  location?: {
+    city?: string;
+    state?: string;
+    country?: string;
+    coordinates?: [number, number];
   };
-  sessionRate: number;
-  location: {
-    city: string;
-    state: string;
-    country: string;
+  sessionRate?: number;
+  specialties?: string[];
+  bjjCredentials?: {
+    beltRank?: string;
+    yearsOfExperience?: number;
   };
-  availability: Array<{
-    day: string;
-    timeSlots: Array<{
-      startTime: string;
-      endTime: string;
-    }>;
-  }>;
+  bio?: string;
+  availability?: {
+    [key: string]: {
+      start: string;
+      end: string;
+    }[];
+  };
 }
 
 export default function InstructorProfile() {
   const params = useParams();
   const [instructor, setInstructor] = useState<Instructor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInstructor = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/users/${params.id}`);
-        setInstructor(response.data);
-      } catch (err: any) {
-        setError(
-          err.response?.data?.message || "Failed to load instructor profile"
-        );
+        // In a real app, this would be an API call to fetch instructor data
+        // For now, we'll use mock data
+        const mockInstructor: Instructor = {
+          _id: params.id as string,
+          firstName: "John",
+          lastName: "Doe",
+          profilePicture: "https://via.placeholder.com/150",
+          location: {
+            city: "New York",
+            state: "NY",
+            country: "USA",
+            coordinates: [40.7128, -74.006],
+          },
+          sessionRate: 100,
+          specialties: ["Brazilian Jiu-Jitsu", "Wrestling", "MMA"],
+          bjjCredentials: {
+            beltRank: "Black Belt",
+            yearsOfExperience: 15,
+          },
+          bio: "World-class BJJ instructor with over 15 years of experience. Multiple-time champion and dedicated coach focused on developing well-rounded practitioners.",
+          availability: {
+            "2024-03-20": [
+              { start: "09:00", end: "10:00" },
+              { start: "10:00", end: "11:00" },
+              { start: "14:00", end: "15:00" },
+              { start: "15:00", end: "16:00" },
+            ],
+            "2024-03-21": [
+              { start: "11:00", end: "12:00" },
+              { start: "13:00", end: "14:00" },
+              { start: "16:00", end: "17:00" },
+            ],
+          },
+        };
+        setInstructor(mockInstructor);
+      } catch (error) {
+        console.error("Error fetching instructor:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (params.id) {
-      fetchInstructor();
-    }
+    fetchInstructor();
   }, [params.id]);
+
+  const handleBooking = async () => {
+    if (!selectedTimeSlot || !instructor) return;
+
+    try {
+      // In a real app, this would be an API call to create a booking
+      console.log(
+        "Booking session with",
+        instructor.firstName,
+        "at",
+        selectedTimeSlot
+      );
+      alert("Booking successful! You'll receive a confirmation email shortly.");
+    } catch (error) {
+      console.error("Error booking session:", error);
+      alert("Failed to book session. Please try again.");
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading instructor profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500">{error}</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   if (!instructor) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500">Instructor not found</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500 text-lg">Instructor not found.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-          {/* Profile Header */}
-          <div className="relative h-48 bg-indigo-600">
-            <div className="absolute -bottom-16 left-8">
-              <div className="h-32 w-32 rounded-full border-4 border-gray-800 overflow-hidden bg-gray-700">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="lg:grid lg:grid-cols-2 lg:gap-8">
+          {/* Instructor Info */}
+          <div>
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-start space-x-6">
                 {instructor.profilePicture ? (
-                  <Image
+                  <img
                     src={instructor.profilePicture}
                     alt={`${instructor.firstName} ${instructor.lastName}`}
-                    width={128}
-                    height={128}
-                    className="object-cover"
+                    className="w-32 h-32 rounded-lg object-cover"
                   />
                 ) : (
-                  <div className="h-full w-full flex items-center justify-center text-white text-4xl font-bold">
+                  <div className="w-32 h-32 rounded-lg bg-blue-600 flex items-center justify-center text-white text-3xl font-bold">
                     {instructor.firstName.charAt(0)}
                     {instructor.lastName.charAt(0)}
                   </div>
                 )}
+                <div className="flex-1">
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {instructor.firstName} {instructor.lastName}
+                  </h1>
+                  <div className="mt-2 flex items-center text-gray-500">
+                    <FiMapPin className="h-5 w-5 mr-2" />
+                    <span>
+                      {instructor.location?.city}, {instructor.location?.state}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center text-gray-500">
+                    <FiDollarSign className="h-5 w-5 mr-2" />
+                    <span>${instructor.sessionRate}/hour</span>
+                  </div>
+                  <div className="mt-2 flex items-center text-gray-500">
+                    <FiAward className="h-5 w-5 mr-2" />
+                    <span>
+                      {instructor.bjjCredentials?.beltRank} •{" "}
+                      {instructor.bjjCredentials?.yearsOfExperience} years
+                      experience
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <h2 className="text-lg font-semibold text-gray-900">About</h2>
+                <p className="mt-2 text-gray-600">{instructor.bio}</p>
+              </div>
+
+              <div className="mt-6">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Specialties
+                </h2>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {instructor.specialties?.map((specialty, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                    >
+                      {specialty}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Profile Content */}
-          <div className="pt-20 pb-8 px-8">
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-white">
-                  {instructor.firstName} {instructor.lastName}
-                </h1>
-                <p className="text-gray-400 mt-1">
-                  {instructor.location.city}, {instructor.location.state},{" "}
-                  {instructor.location.country}
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-lg text-gray-300">
-                  ${instructor.sessionRate}/hour
-                </div>
-                <button className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
-                  Book a Session
-                </button>
-              </div>
-            </div>
-
-            {/* Bio */}
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold text-white mb-2">About</h2>
-              <p className="text-gray-300">
-                {instructor.bio || "No bio available"}
-              </p>
-            </div>
-
-            {/* Credentials */}
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold text-white mb-4">
-                Credentials
+          {/* Booking Calendar */}
+          <div>
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Book a Session
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-lg font-medium text-white mb-2">
-                    Belt Rank
-                  </h3>
-                  <p className="text-gray-300">
-                    {instructor.bjjCredentials.beltRank}
-                  </p>
+              <Calendar
+                selectedDate={selectedDate}
+                onDateSelect={setSelectedDate}
+                availability={instructor.availability}
+                onTimeSelect={setSelectedTimeSlot}
+                selectedTimeSlot={selectedTimeSlot}
+              />
+              {selectedTimeSlot && (
+                <div className="mt-6">
+                  <button
+                    onClick={handleBooking}
+                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Book Session for {selectedTimeSlot}
+                  </button>
                 </div>
-                <div className="bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-lg font-medium text-white mb-2">
-                    Experience
-                  </h3>
-                  <p className="text-gray-300">
-                    {instructor.bjjCredentials.yearsOfExperience} years of
-                    practice
-                  </p>
-                </div>
-                <div className="bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-lg font-medium text-white mb-2">
-                    Teaching Experience
-                  </h3>
-                  <p className="text-gray-300">
-                    {instructor.bjjCredentials.teachingExperience} years
-                  </p>
-                </div>
-                <div className="bg-gray-700 p-4 rounded-lg">
-                  <h3 className="text-lg font-medium text-white mb-2">
-                    Certifications
-                  </h3>
-                  <ul className="text-gray-300 list-disc list-inside">
-                    {instructor.bjjCredentials.certifications.map(
-                      (cert, index) => (
-                        <li key={index}>{cert}</li>
-                      )
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Availability */}
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold text-white mb-4">
-                Availability
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {instructor.availability.map((day, index) => (
-                  <div key={index} className="bg-gray-700 p-4 rounded-lg">
-                    <h3 className="text-lg font-medium text-white mb-2">
-                      {day.day}
-                    </h3>
-                    <ul className="text-gray-300">
-                      {day.timeSlots.map((slot, slotIndex) => (
-                        <li key={slotIndex}>
-                          {slot.startTime} - {slot.endTime}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+              )}
             </div>
           </div>
         </div>
