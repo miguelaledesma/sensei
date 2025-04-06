@@ -20,6 +20,10 @@ export default function Navbar() {
 
   const isActive = (path: string) => pathname === path;
 
+  // Determine which dashboard link to show based on user role
+  const dashboardLink =
+    user?.role === "instructor" ? "/instructor-dashboard" : "/dashboard";
+
   return (
     <nav className="bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -46,14 +50,16 @@ export default function Navbar() {
               {user ? (
                 <>
                   <Link
-                    href="/dashboard"
+                    href={dashboardLink}
                     className={`${
-                      isActive("/dashboard")
+                      isActive(dashboardLink)
                         ? "bg-gray-800 text-white"
                         : "text-gray-300 hover:bg-gray-700 hover:text-white"
                     } px-3 py-2 rounded-md text-sm font-medium`}
                   >
-                    Dashboard
+                    {user.role === "instructor"
+                      ? "Instructor Dashboard"
+                      : "Dashboard"}
                   </Link>
                   <button
                     onClick={handleLogout}
@@ -151,14 +157,16 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link
-                  href="/dashboard"
+                  href={dashboardLink}
                   className={`${
-                    isActive("/dashboard")
+                    isActive(dashboardLink)
                       ? "bg-gray-800 text-white"
                       : "text-gray-300 hover:bg-gray-700 hover:text-white"
                   } block px-3 py-2 rounded-md text-base font-medium`}
                 >
-                  Dashboard
+                  {user.role === "instructor"
+                    ? "Instructor Dashboard"
+                    : "Dashboard"}
                 </Link>
                 <button
                   onClick={handleLogout}

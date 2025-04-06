@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { FiMapPin, FiClock, FiAward, FiDollarSign } from "react-icons/fi";
 import Calendar from "@/components/Calendar";
+import { useAuth } from "@/contexts/AuthContext";
+import { format } from "date-fns";
 
 interface Instructor {
   _id: string;
@@ -34,17 +36,21 @@ interface Instructor {
 
 export default function InstructorProfile() {
   const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
   const [instructor, setInstructor] = useState<Instructor | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  const [bookingStep, setBookingStep] = useState<
+    "selecting" | "confirming" | "success"
+  >("selecting");
 
   useEffect(() => {
     const fetchInstructor = async () => {
       try {
         setLoading(true);
-        // In a real app, this would be an API call to fetch instructor data
-        // For now, we'll use mock data
+        // Mock data for instructor
         const mockInstructor: Instructor = {
           _id: params.id as string,
           firstName: "John",
@@ -91,19 +97,54 @@ export default function InstructorProfile() {
   const handleBooking = async () => {
     if (!selectedTimeSlot || !instructor) return;
 
-    try {
-      // In a real app, this would be an API call to create a booking
-      console.log(
-        "Booking session with",
-        instructor.firstName,
-        "at",
-        selectedTimeSlot
+    if (!user) {
+      // Save booking details to localStorage before redirecting
+      localStorage.setItem(
+        "pendingBooking",
+        JSON.stringify({
+          instructorId: instructor._id,
+          date: selectedDate.toISOString(),
+          timeSlot: selectedTimeSlot,
+        })
       );
-      alert("Booking successful! You'll receive a confirmation email shortly.");
+      router.push(
+        "/sign-in?redirect=" +
+          encodeURIComponent(`/instructors/${instructor._id}`)
+      );
+      return;
+    }
+
+    try {
+      // Mock API call to create booking
+      const bookingDetails = {
+        instructorId: instructor._id,
+        studentId: user.id,
+        date: selectedDate.toISOString(),
+        timeSlot: selectedTimeSlot,
+        status: "confirmed",
+      };
+
+      // In a real app, this would be an API call
+      // await axios.post('/api/bookings', bookingDetails);
+
+      // Store booking in localStorage for mock data persistence
+      const existingBookings = JSON.parse(
+        localStorage.getItem("bookings") || "[]"
+      );
+      localStorage.setItem(
+        "bookings",
+        JSON.stringify([...existingBookings, bookingDetails])
+      );
+
+      setBookingStep("success");
     } catch (error) {
       console.error("Error booking session:", error);
       alert("Failed to book session. Please try again.");
     }
+  };
+
+  const handleConfirmBooking = () => {
+    setBookingStep("confirming");
   };
 
   if (loading) {
@@ -118,6 +159,102 @@ export default function InstructorProfile() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-500 text-lg">Instructor not found.</p>
+      </div>
+    );
+  }
+
+  if (bookingStep === "success") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full mx-auto p-6 bg-white rounded-lg shadow-sm text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-green-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Booking Confirmed!
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Your session with {instructor.firstName} {instructor.lastName} is
+            scheduled for {format(selectedDate, "MMMM d, yyyy")} at{" "}
+            {selectedTimeSlot}.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="block w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              View My Dashboard
+            </button>
+            <button
+              onClick={() => router.push("/instructors")}
+              className="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            >
+              Find More Instructors
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (bookingStep === "confirming") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full mx-auto p-6 bg-white rounded-lg shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Confirm Your Booking
+          </h2>
+          <div className="space-y-4 mb-6">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Instructor:</span>
+              <span className="font-medium">
+                {instructor.firstName} {instructor.lastName}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Date:</span>
+              <span className="font-medium">
+                {format(selectedDate, "MMMM d, yyyy")}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Time:</span>
+              <span className="font-medium">{selectedTimeSlot}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Rate:</span>
+              <span className="font-medium">
+                ${instructor.sessionRate}/hour
+              </span>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <button
+              onClick={handleBooking}
+              className="block w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Confirm Booking
+            </button>
+            <button
+              onClick={() => setBookingStep("selecting")}
+              className="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            >
+              Change Time
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -206,7 +343,7 @@ export default function InstructorProfile() {
               {selectedTimeSlot && (
                 <div className="mt-6">
                   <button
-                    onClick={handleBooking}
+                    onClick={handleConfirmBooking}
                     className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Book Session for {selectedTimeSlot}
